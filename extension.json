@@ -1,0 +1,97 @@
+{
+	"name": "symbols-extraction-tool",
+	"uuid": "54064d65926c49dbb5572180d3497726",
+	"displayName": "符号提取助手",
+	"description": "基于 Qwen2.5-VL 视觉模型提取符号信息，并依据所提取的信息将符号直接生成至画布.",
+	"version": "1.2.2",
+	"publisher": "JLCEDA",
+	"engines": {
+		"eda": "^2.3"
+	},
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "extension-store",
+		"url": ""
+	},
+	"categories": "Symbol",
+	"keywords": ["symbols", "extraction", "tool"],
+	"images": {
+		"logo": "./images/logo.png"
+	},
+	"homepage": "https://pro.lceda.cn",
+	"bugs": "https://lceda.cn/page/feedback?originPage=other",
+	"activationEvents": {},
+	"entry": "./dist/index",
+	"dependentExtensions": {},
+	"headerMenus": {
+		"home": [
+			{
+				"id": "Tool",
+				"title": "助手",
+				"menuItems": [
+					{
+						"id": "Open",
+						"title": "符号提取",
+						"registerFn": "openIframe"
+					},
+					{
+						"id": "Show",
+						"title": "继续创建",
+						"registerFn": "showIframe"
+					},
+					{
+						"id": "About",
+						"title": "关于",
+						"registerFn": "about"
+					}
+				]
+			}
+		],
+		"sch": [
+			{
+				"id": "Tool",
+				"title": "助手",
+				"menuItems": [
+					{
+						"id": "Open",
+						"title": "符号提取",
+						"registerFn": "openIframe"
+					},
+					{
+						"id": "Show",
+						"title": "继续创建",
+						"registerFn": "showIframe"
+					},
+					{
+						"id": "About",
+						"title": "关于",
+						"registerFn": "about"
+					}
+				]
+			}
+		],
+		"symbol": [
+			{
+				"id": "Tool",
+				"title": "助手",
+				"menuItems": [
+					{
+						"id": "Open",
+						"title": "符号提取",
+						"registerFn": "openIframe"
+					},
+					{
+						"id": "Show",
+						"title": "继续创建",
+						"registerFn": "showIframe"
+					},
+					{
+						"id": "About",
+						"title": "关于",
+						"registerFn": "about"
+					}
+				]
+			}
+		]
+	}
+}

@@ -1,0 +1,1153 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+		<title>符号提取助手</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 0;
+				padding: 20px;
+				background-color: #f5f5f5;
+			}
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+				background-color: #fff;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+				padding: 20px;
+			}
+			h1 {
+				text-align: center;
+				color: #333;
+			}
+			.api-key-section,
+			.model-select-section {
+				margin-bottom: 15px;
+			}
+			label {
+				display: block;
+				margin-bottom: 5px;
+				font-weight: bold;
+			}
+			input[type='text'],
+			select {
+				width: 100%;
+				padding: 8px;
+				margin-bottom: 10px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+			}
+			.upload-area {
+				border: 2px dashed #ccc;
+				border-radius: 8px;
+				padding: 20px;
+				text-align: center;
+				margin-bottom: 20px;
+				cursor: pointer;
+				transition: all 0.3s;
+			}
+			.upload-area.highlight {
+				border-color: #2f8ae0;
+				background-color: #f9f9f9;
+			}
+			.upload-area p {
+				color: #666;
+			}
+			.preview-container {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+				gap: 15px;
+				margin-bottom: 20px;
+			}
+			.preview-item {
+				border: 1px solid #eee;
+				border-radius: 4px;
+				padding: 10px;
+				position: relative;
+			}
+			.preview-item img {
+				max-width: 100%;
+				height: auto;
+				border-radius: 4px;
+			}
+			.preview-item-info {
+				margin-top: 8px;
+				font-size: 12px;
+			}
+			.preview-item-name {
+				font-weight: bold;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.preview-item-size {
+				color: #888;
+			}
+			.preview-item-remove {
+				position: absolute;
+				top: 5px;
+				right: 5px;
+				background: none;
+				border: none;
+				font-size: 16px;
+				cursor: pointer;
+				color: #999;
+			}
+			.controls {
+				display: flex;
+				justify-content: space-between;
+				margin-bottom: 20px;
+			}
+			.control-group {
+				display: flex;
+				gap: 10px;
+			}
+			button {
+				padding: 8px 16px;
+				background-color: #2f8ae0;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				transition: background-color 0.3s;
+			}
+			button:hover {
+				background-color: #2f8ae0b2;
+			}
+			button:disabled {
+				background-color: #cccccc;
+				cursor: not-allowed;
+			}
+			.results-container {
+				border-top: 1px solid #eee;
+				padding-top: 20px;
+			}
+			.results-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 15px;
+			}
+			.results-count {
+				font-weight: bold;
+			}
+			.results-controls {
+				display: flex;
+				gap: 15px;
+			}
+			select {
+				padding: 5px;
+				border-radius: 4px;
+				border: 1px solid #ccc;
+			}
+			.results-list {
+				max-height: 600px;
+				overflow-y: auto;
+			}
+			.result-item {
+				border-bottom: 1px solid #eee;
+				padding: 15px 0;
+			}
+			.result-item-header {
+				display: flex;
+				align-items: center;
+				margin-bottom: 10px;
+			}
+			.result-item-header img {
+				width: 40px;
+				height: 40px;
+				object-fit: cover;
+				border-radius: 4px;
+				margin-right: 10px;
+			}
+			.result-item-title {
+				font-weight: bold;
+				flex: 1;
+			}
+			.result-item-status {
+				color: #4885e0;
+			}
+			.result-item-content {
+				white-space: pre-wrap;
+				line-height: 1.5;
+			}
+			.result-item-footer {
+				display: flex;
+				gap: 10px;
+				margin-top: 10px;
+			}
+			.result-item.error .result-item-status {
+				color: #f44336;
+			}
+			.cost-container {
+				margin-top: 20px;
+				padding: 10px;
+				background-color: #f9f9f9;
+				border-radius: 4px;
+			}
+			.cost-container div {
+				margin: 5px 0;
+				display: flex;
+				justify-content: space-between;
+			}
+			.scroll-indicator {
+				text-align: center;
+				padding: 10px;
+				background-color: #f0f0f0;
+				color: #666;
+				display: none;
+			}
+			.dark-mode {
+				background-color: #333;
+				color: #fff;
+			}
+			.dark-mode .container {
+				background-color: #222;
+				color: #fff;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+			}
+			.dark-mode .upload-area {
+				border-color: #555;
+			}
+			.dark-mode .preview-item {
+				border-color: #444;
+			}
+			.dark-mode .results-list {
+				border-color: #444;
+			}
+			.dark-mode .result-item.error .result-item-status {
+				color: #ff5555;
+			}
+			.dark-mode .cost-container {
+				background-color: #333;
+			}
+			.progress-container {
+				margin: 20px 0;
+				display: none;
+			}
+			.progress-bar-container {
+				height: 20px;
+				background-color: #f0f0f0;
+				border-radius: 10px;
+				overflow: hidden;
+			}
+			#progress-bar {
+				height: 100%;
+				background-color: #2f8ae0;
+				width: 0%;
+			}
+			.timer-container {
+				text-align: center;
+				margin-top: 10px;
+				font-weight: bold;
+			}
+			.result-card {
+				border: 1px solid #eee;
+				border-radius: 8px;
+				padding: 15px;
+				margin-bottom: 15px;
+				cursor: pointer;
+				transition: all 0.3s;
+			}
+			.result-card:hover {
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
+			.result-card-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 10px;
+			}
+			.result-card-title {
+				font-weight: bold;
+			}
+			.result-card-content {
+				display: none;
+				white-space: pre-wrap;
+				line-height: 1.5;
+			}
+			.result-card-footer {
+				display: flex;
+				justify-content: flex-end;
+				margin-top: 10px;
+			}
+			.result-card-footer button {
+				padding: 5px 10px;
+				background-color: #f0f0f0;
+				color: #333;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			.top-right-button {
+				background-color: #4caf50;
+			}
+			.top-right-button:hover {
+				background-color: #45a049;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>符号提取助手</h1>
+
+			<!-- API密钥输入区域 -->
+			<div class="api-key-section">
+				<label for="api-key">API密钥:</label>
+				<input type="text" id="api-key" placeholder="请输入您的API密钥" />
+			</div>
+
+			<!-- 模型选择区域 -->
+			<div class="model-select-section">
+				<label for="model-select">选择模型:</label>
+				<select id="model-select">
+					<option value="qwen-vl-max-latest">qwen-vl-max-latest</option>
+					<option value="qwen2.5-vl-7b-instruct">qwen2.5-vl-7b-instruct</option>
+					<option value="qwen2.5-vl-72b-instruct">qwen2.5-vl-72b-instruct</option>
+					<option value="qvq-72b-preview">qvq-72b-preview</option>
+					<option value="qwen-vl-plus">qwen-vl-plus</option>
+				</select>
+			</div>
+
+			<div id="drop-area" class="upload-area">
+				<p>拖拽图片到此处或点击上传</p>
+				<input type="file" id="file-input" multiple accept="image/*" style="display: none" />
+			</div>
+
+			<div id="preview-container" style="display: none">
+				<div class="preview-container" id="preview-list"></div>
+				<div id="image-count">已上传</div>
+			</div>
+
+			<div class="controls">
+				<div class="control-group">
+					<button id="start-analysis">开始分析</button>
+					<button id="stop-analysis" disabled>停止分析</button>
+					<button id="clear-all">清除所有</button>
+					<button class="top-right-button" id="hideButton">隐藏窗口</button>
+				</div>
+			</div>
+
+			<div id="progress-container" class="progress-container">
+				<div class="progress-bar-container">
+					<div id="progress-bar"></div>
+				</div>
+				<div id="progress-text">处理中: 0/0</div>
+				<div class="timer-container" id="timer">已用时: 00:00</div>
+			</div>
+
+			<div id="results-container" class="results-container">
+				<div class="results-header">
+					<div class="results-count">分析结果: 0</div>
+				</div>
+				<div class="results-list" id="results-list"></div>
+			</div>
+
+			<div id="download-all-container" style="display: none; margin-top: 20px; text-align: center">
+				<button id="download-all">下载所有结果</button>
+			</div>
+
+			<div id="cost-container" class="cost-container" style="display: none">
+				<div>输入Token: <span id="input-tokens">0</span></div>
+				<div>输出Token: <span id="output-tokens">0</span></div>
+				<div>输入费用: <span id="input-cost">¥0.00</span></div>
+				<div>输出费用: <span id="output-cost">¥0.00</span></div>
+				<div>总费用: <span id="total-cost">¥0.00</span></div>
+			</div>
+
+			<div id="scroll-indicator" class="scroll-indicator"></div>
+		</div>
+
+		<script>
+			// 全局变量
+			let uploadedFiles = [];
+			let analysisResults = [];
+			let isProcessing = false;
+			let apiKey = eda.sys_Storage.getExtensionUserConfig('api_key') || '';
+			let selectedModel = eda.sys_Storage.getExtensionUserConfig('selected_model') || 'qwen-vl-max-latest';
+			let shouldStopProcessing = false;
+			let batchSize = 1;
+			let currentViewMode = 'grid';
+			let totalInputTokens = 0;
+			let totalOutputTokens = 0;
+			const modelRates = {
+				'qwen-vl-max-latest': { input: 0.003, output: 0.009 },
+				'qwen2.5-vl-7b-instruct': { input: 0.002, output: 0.005 },
+				'qwen2.5-vl-72b-instruct': { input: 0.016, output: 0.048 },
+				'qvq-72b-preview': { input: 0.012, output: 0.036 },
+				'qwen-vl-plus': { input: 0.0015, output: 0.0045 },
+			};
+			let startTime = 0;
+
+			// DOM元素
+			const dropArea = document.getElementById('drop-area');
+			const fileInput = document.getElementById('file-input');
+			const previewContainer = document.getElementById('preview-container');
+			const previewList = document.getElementById('preview-list');
+			const imageCount = document.getElementById('image-count');
+			const startButton = document.getElementById('start-analysis');
+			const stopButton = document.getElementById('stop-analysis');
+			const clearAllButton = document.getElementById('clear-all');
+			const resultsContainer = document.getElementById('results-container');
+			const resultsList = document.getElementById('results-list');
+			const progressContainer = document.getElementById('progress-container');
+			const progressBar = document.getElementById('progress-bar');
+			const progressText = document.getElementById('progress-text');
+			const timerElement = document.getElementById('timer');
+			const downloadAllContainer = document.getElementById('download-all-container');
+			const downloadAllButton = document.getElementById('download-all');
+			const costContainer = document.getElementById('cost-container');
+			const inputTokensElement = document.getElementById('input-tokens');
+			const outputTokensElement = document.getElementById('output-tokens');
+			const inputCostElement = document.getElementById('input-cost');
+			const outputCostElement = document.getElementById('output-cost');
+			const totalCostElement = document.getElementById('total-cost');
+			const scrollIndicator = document.getElementById('scroll-indicator');
+			const apiKeyInput = document.getElementById('api-key');
+			const modelSelect = document.getElementById('model-select');
+
+			// 隐藏 IFrame
+			const hideButton = document.getElementById('hideButton');
+			hideButton.addEventListener('click', () => {
+				eda.sys_IFrame.hideIFrame('First');
+			});
+
+			// 初始化
+			document.addEventListener('DOMContentLoaded', function () {
+				// 检查localStorage中是否有保存的API密钥
+				if (eda.sys_Storage.getExtensionUserConfig('api_key')) {
+					apiKeyInput.value = eda.sys_Storage.getExtensionUserConfig('api_key');
+				}
+
+				// 检查localStorage中是否有保存的模型选择
+				if (eda.sys_Storage.getExtensionUserConfig('selected_model')) {
+					modelSelect.value = eda.sys_Storage.getExtensionUserConfig('selected_model');
+				}
+
+				initDropArea();
+				initButtons();
+				updateUI();
+			});
+
+			/**
+			 * 初始化拖放区域的事件监听
+			 */
+			function initDropArea() {
+				['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+					dropArea.addEventListener(eventName, preventDefaults, false);
+				});
+
+				['dragenter', 'dragover'].forEach((eventName) => {
+					dropArea.addEventListener(eventName, highlight, false);
+				});
+
+				['dragleave', 'drop'].forEach((eventName) => {
+					dropArea.addEventListener(eventName, unhighlight, false);
+				});
+
+				dropArea.addEventListener('drop', handleDrop, false);
+				dropArea.addEventListener('click', () => {
+					fileInput.click();
+				});
+
+				fileInput.addEventListener('change', handleFiles, false);
+			}
+
+			/**
+			 * 阻止默认拖放行为
+			 */
+			function preventDefaults(e) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+
+			/**
+			 * 高亮显示拖放区域
+			 */
+			function highlight() {
+				dropArea.classList.add('highlight');
+			}
+
+			/**
+			 * 取消高亮显示
+			 */
+			function unhighlight() {
+				dropArea.classList.remove('highlight');
+			}
+
+			/**
+			 * 处理拖放的文件
+			 */
+			function handleDrop(e) {
+				const dt = e.dataTransfer;
+				const files = dt.files;
+				handleFiles({ target: { files } });
+			}
+
+			/**
+			 * 处理文件上传
+			 */
+			function handleFiles(e) {
+				let files = [];
+				if (e.dataTransfer) {
+					files = e.dataTransfer.files;
+				} else if (e.target && e.target.files) {
+					files = e.target.files;
+				}
+
+				if (files.length === 0) return;
+
+				previewContainer.style.display = 'block';
+
+				for (let i = 0; i < files.length; i++) {
+					const file = files[i];
+					if (!file.type.match('image.*')) {
+						eda.sys_ToastMessage.showMessage(`文件 "${file.name}" 不是图片，已跳过`, 2);
+						continue;
+					}
+
+					const existingIndex = uploadedFiles.findIndex((f) => f.name === file.name);
+					if (existingIndex !== -1) {
+						uploadedFiles[existingIndex] = file;
+						const previewItem = document.querySelector(`.preview-item[data-filename="${file.name}"]`);
+						if (previewItem) {
+							previewItem.remove();
+						}
+					} else {
+						uploadedFiles.push(file);
+					}
+
+					createPreviewItem(file);
+				}
+
+				imageCount.textContent = '已上传 ' + uploadedFiles.length;
+				updateUI();
+			}
+
+			/**
+			 * 创建图片预览项
+			 */
+			function createPreviewItem(file) {
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					const previewItem = document.createElement('div');
+					previewItem.className = 'preview-item';
+					previewItem.dataset.filename = file.name;
+
+					const img = document.createElement('img');
+					img.src = e.target.result;
+					img.alt = file.name;
+
+					const info = document.createElement('div');
+					info.className = 'preview-item-info';
+
+					const name = document.createElement('div');
+					name.className = 'preview-item-name';
+					name.textContent = file.name;
+
+					const size = document.createElement('div');
+					size.className = 'preview-item-size';
+					size.textContent = formatFileSize(file.size);
+
+					const removeBtn = document.createElement('button');
+					removeBtn.className = 'preview-item-remove';
+					removeBtn.innerHTML = '&times;';
+					removeBtn.title = '移除图片';
+					removeBtn.addEventListener('click', (e) => {
+						e.stopPropagation();
+						removeFile(file.name);
+					});
+
+					info.appendChild(name);
+					info.appendChild(size);
+					previewItem.appendChild(img);
+					previewItem.appendChild(info);
+					previewItem.appendChild(removeBtn);
+
+					previewList.appendChild(previewItem);
+				};
+
+				reader.readAsDataURL(file);
+			}
+
+			/**
+			 * 格式化文件大小
+			 */
+			function formatFileSize(bytes) {
+				if (bytes < 1024) {
+					return bytes + ' B';
+				} else if (bytes < 1024 * 1024) {
+					return (bytes / 1024).toFixed(2) + ' KB';
+				} else {
+					return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+				}
+			}
+
+			/**
+			 * 从上传列表中移除文件
+			 */
+			function removeFile(filename) {
+				const index = uploadedFiles.findIndex((file) => file.name === filename);
+				if (index !== -1) {
+					uploadedFiles.splice(index, 1);
+				}
+
+				const previewItem = document.querySelector(`.preview-item[data-filename="${filename}"]`);
+				if (previewItem) {
+					previewItem.remove();
+				}
+
+				imageCount.textContent = '已上传 ' + uploadedFiles.length;
+				updateUI();
+			}
+
+			/**
+			 * 更新UI状态
+			 */
+			function updateUI() {
+				startButton.disabled = uploadedFiles.length === 0 || isProcessing;
+				clearAllButton.disabled = uploadedFiles.length === 0 || isProcessing;
+				stopButton.disabled = !isProcessing;
+			}
+
+			/**
+			 * 清除所有上传的文件
+			 */
+			function clearAll() {
+				uploadedFiles = [];
+				previewList.innerHTML = '';
+				imageCount.textContent = '已上传  0';
+				analysisResults = [];
+				resultsList.innerHTML = '';
+				downloadAllContainer.style.display = 'none';
+				costContainer.style.display = 'none';
+				updateUI();
+			}
+
+			/**
+			 * 停止分析过程
+			 */
+			function stopAnalysis() {
+				if (!isProcessing) return;
+				shouldStopProcessing = true;
+				stopButton.disabled = true;
+				stopButton.textContent = '正在停止...';
+			}
+
+			/**
+			 * 开始分析图片
+			 */
+			async function startAnalysis() {
+				// 获取当前API密钥和模型
+				eda.sys_ToastMessage.showMessage('图片识别正在进行中，等待期间可选择隐藏窗口', 3);
+				apiKey = apiKeyInput.value.trim();
+				selectedModel = modelSelect.value;
+
+				if (!apiKey) {
+					eda.sys_ToastMessage.showMessage('请输入API密钥', 0);
+					return;
+				}
+
+				eda.sys_Storage.setExtensionUserConfig('api_key', apiKey);
+				eda.sys_Storage.setExtensionUserConfig('selected_model', selectedModel);
+				if (uploadedFiles.length === 0 || isProcessing) {
+					return;
+				}
+
+				isProcessing = true;
+				updateUI();
+				progressContainer.style.display = 'block';
+				progressBar.style.width = '0%';
+				progressText.textContent = `处理中: 0/${uploadedFiles.length}`;
+				resultsList.innerHTML = '';
+				analysisResults = [];
+				totalInputTokens = 0;
+				totalOutputTokens = 0;
+				costContainer.style.display = 'none';
+				startTime = Date.now();
+
+				setInterval(() => {
+					const elapsedTime = Date.now() - startTime;
+					const minutes = Math.floor(elapsedTime / 60000);
+					const seconds = Math.floor((elapsedTime % 60000) / 1000);
+					timerElement.textContent = `已用时: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+				}, 1000);
+
+				for (let i = 0; i < uploadedFiles.length; i += batchSize) {
+					if (shouldStopProcessing) {
+						progressText.textContent = `已停止: ${i}/${uploadedFiles.length}`;
+						break;
+					}
+
+					const endIndex = Math.min(i + batchSize, uploadedFiles.length);
+					const currentBatchFiles = uploadedFiles.slice(i, endIndex);
+					const progress = Math.round((i / uploadedFiles.length) * 100);
+					progressBar.style.width = `${progress}%`;
+					progressText.textContent = `处理中: ${i}/${uploadedFiles.length}`;
+
+					const batchPromises = currentBatchFiles.map(async (file, batchIndex) => {
+						const fileIndex = i + batchIndex;
+						try {
+							const base64Data = await readFileAsBase64(file);
+							if (shouldStopProcessing) return;
+
+							const resultData = await analyzeImage(file, base64Data, file.type);
+							analysisResults.push({
+								filename: file.name,
+								result: resultData.result,
+								inputTokens: resultData.inputTokens,
+								outputTokens: resultData.outputTokens,
+								base64: base64Data,
+								file: file,
+								index: fileIndex,
+								isError: false,
+							});
+							displayResult(file, base64Data, resultData.result);
+							calculateAndUpdateCost(selectedModel, resultData.inputTokens, resultData.outputTokens);
+						} catch (error) {
+							console.error('处理文件时出错:', error);
+							if (shouldStopProcessing) return;
+							analysisResults.push({
+								filename: file.name,
+								errorMessage: error.message,
+								inputTokens: 0,
+								outputTokens: 0,
+								file: file,
+								index: fileIndex,
+								isError: true,
+							});
+							displayError(file, error.message);
+						}
+					});
+
+					await Promise.all(batchPromises);
+					if (shouldStopProcessing) break;
+				}
+
+				const processedCount = shouldStopProcessing ? analysisResults.length : uploadedFiles.length;
+				progressBar.style.width = '100%';
+				progressText.textContent = `处理完成: ${processedCount}/${uploadedFiles.length}`;
+				setTimeout(() => {
+					progressContainer.style.display = 'none';
+					progressBar.style.width = '0%';
+				}, 2000);
+
+				if (analysisResults.length > 0) {
+					downloadAllContainer.style.display = 'block';
+				}
+
+				setTimeout(() => {
+					isProcessing = false;
+					shouldStopProcessing = false;
+					updateUI();
+				}, 1000);
+			}
+
+			/**
+			 * 读取文件并转换为Base64
+			 */
+			function readFileAsBase64(file) {
+				return new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = function (e) {
+						const base64 = e.target.result.split(',')[1];
+						resolve(base64);
+					};
+					reader.onerror = function (e) {
+						reject(new Error('读取文件失败'));
+					};
+					reader.readAsDataURL(file);
+				});
+			}
+
+			/**
+			 * 调用API分析图片
+			 */
+			async function analyzeImage(file, base64Image, mimeType) {
+				if (shouldStopProcessing) {
+					throw new Error('用户已停止处理');
+				}
+
+				const url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+				const data = {
+					model: selectedModel,
+					messages: [
+						{
+							role: 'system',
+							content: [{ type: 'text', text: 'You are a helpful assistant.' }],
+						},
+						{
+							role: 'user',
+							content: [
+								{
+									type: 'image_url',
+									image_url: {
+										url: `data:image/${mimeType};base64,${base64Image}`,
+									},
+								},
+								{
+									type: 'text',
+									text: "从芯片封装手册的符号图中提取以下信息:{['type'],['pinNumber','pinName',]}，图像 type 包括:SOP、QFN、BGA。严格输出JSON",
+								},
+							],
+						},
+					],
+				};
+
+				try {
+					const response = await eda.sys_ClientUrl.request(url, 'POST', JSON.stringify(data), {
+						headers: {
+							'Authorization': `Bearer ${apiKey}`,
+							'Content-Type': 'application/json',
+						},
+					});
+
+					if (!response.ok) {
+						throw new Error('API请求失败');
+					}
+
+					const result = await response.json();
+					return {
+						result: result.choices[0].message.content,
+						inputTokens: result.usage.prompt_tokens,
+						outputTokens: result.usage.completion_tokens,
+					};
+				} catch (error) {
+					throw new Error('API调用失败');
+				}
+			}
+
+			/**
+			 * 显示分析结果
+			 */
+			function displayResult(file, base64, result) {
+				const resultCard = document.createElement('div');
+				resultCard.className = 'result-card';
+
+				const header = document.createElement('div');
+				header.className = 'result-card-header';
+				const title = document.createElement('div');
+				title.className = 'result-card-title';
+				title.textContent = file.name;
+				const toggleBtn = document.createElement('button');
+				toggleBtn.textContent = '展开';
+				toggleBtn.addEventListener('click', () => {
+					const content = resultCard.querySelector('.result-card-content');
+					if (content.style.display === 'none' || content.style.display === '') {
+						content.style.display = 'block';
+						toggleBtn.textContent = '收起';
+					} else {
+						content.style.display = 'none';
+						toggleBtn.textContent = '展开';
+					}
+				});
+				header.appendChild(title);
+				header.appendChild(toggleBtn);
+
+				const content = document.createElement('div');
+				content.className = 'result-card-content';
+				content.textContent = result;
+
+				const footer = document.createElement('div');
+				footer.className = 'result-card-footer';
+				const copyBtn = document.createElement('button');
+				copyBtn.textContent = '复制结果';
+				copyBtn.addEventListener('click', () => {
+					navigator.clipboard
+						.writeText(result)
+						.then(() => {
+							copyBtn.textContent = '已复制';
+							setTimeout(() => {
+								copyBtn.textContent = '复制结果';
+							}, 2000);
+						})
+						.catch((err) => {
+							console.error('复制失败:', err);
+							eda.sys_ToastMessage.showMessage('复制失败，请手动复制', 0);
+						});
+				});
+				const createSymbolBtn = document.createElement('button');
+				createSymbolBtn.className = 'create-symbol-btn';
+				createSymbolBtn.textContent = '创建符号';
+				createSymbolBtn.addEventListener('click', () => {
+					createSymbol(result);
+				});
+				footer.appendChild(copyBtn);
+				footer.appendChild(createSymbolBtn);
+
+				resultCard.appendChild(header);
+				resultCard.appendChild(content);
+				resultCard.appendChild(footer);
+
+				resultsList.appendChild(resultCard);
+			}
+
+			/**
+			 * 显示错误结果
+			 */
+			function displayError(file, errorMessage) {
+				const resultCard = document.createElement('div');
+				resultCard.className = 'result-card error';
+
+				const header = document.createElement('div');
+				header.className = 'result-card-header';
+				const title = document.createElement('div');
+				title.className = 'result-card-title';
+				title.textContent = file.name;
+				const toggleBtn = document.createElement('button');
+				toggleBtn.textContent = '展开';
+				toggleBtn.addEventListener('click', () => {
+					const content = resultCard.querySelector('.result-card-content');
+					if (content.style.display === 'none' || content.style.display === '') {
+						content.style.display = 'block';
+						toggleBtn.textContent = '收起';
+					} else {
+						content.style.display = 'none';
+						toggleBtn.textContent = '展开';
+					}
+				});
+				header.appendChild(title);
+				header.appendChild(toggleBtn);
+
+				const content = document.createElement('div');
+				content.className = 'result-card-content';
+				content.textContent = `处理失败: ${errorMessage}`;
+
+				resultCard.appendChild(header);
+				resultCard.appendChild(content);
+
+				resultsList.appendChild(resultCard);
+			}
+
+			/**
+			 * 初始化按钮事件监听
+			 */
+			function initButtons() {
+				startButton.addEventListener('click', startAnalysis);
+				stopButton.addEventListener('click', stopAnalysis);
+				clearAllButton.addEventListener('click', clearAll);
+				downloadAllButton.addEventListener('click', downloadAllResults);
+			}
+
+			/**
+			 * 下载所有结果
+			 */
+			function downloadAllResults() {
+				if (analysisResults.length === 0) {
+					eda.sys_ToastMessage.showMessage('没有可下载的结果', 2);
+					return;
+				}
+
+				const zip = new JSZip();
+				analysisResults.forEach((result) => {
+					const filename = `${result.filename.split('.')[0]}.txt`;
+					zip.file(filename, result.result);
+				});
+
+				zip.generateAsync({ type: 'blob' })
+					.then((blob) => {
+						const link = document.createElement('a');
+						link.href = URL.createObjectURL(blob);
+						const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+						link.download = `图片分析结果_${timestamp}.zip`;
+						document.body.appendChild(link);
+						link.click();
+						document.body.removeChild(link);
+						setTimeout(() => URL.revokeObjectURL(link.href), 100);
+					})
+					.catch((err) => {
+						console.error('创建ZIP文件失败:', err);
+						eda.sys_ToastMessage.showMessage('创建ZIP文件失败，将逐个下载结果', 2);
+						analysisResults.forEach((result) => {
+							downloadResult(result.filename, result.result);
+						});
+					});
+			}
+
+			/**
+			 * 下载单个结果
+			 */
+			function downloadResult(filename, content) {
+				const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.download = `${filename.split('.')[0]}.txt`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				setTimeout(() => URL.revokeObjectURL(link.href), 100);
+			}
+
+			/**
+			 * 计算费用并更新UI
+			 */
+			function calculateAndUpdateCost(model, inputTokens, outputTokens) {
+				totalInputTokens += inputTokens;
+				totalOutputTokens += outputTokens;
+				const rates = modelRates[model] || modelRates['qwen-vl-max-latest'];
+				const inputCost = (totalInputTokens / 1000) * rates.input;
+				const outputCost = (totalOutputTokens / 1000) * rates.output;
+				const totalCost = inputCost + outputCost;
+				inputTokensElement.textContent = totalInputTokens;
+				outputTokensElement.textContent = totalOutputTokens;
+				inputCostElement.textContent = `¥${inputCost.toFixed(4)}`;
+				outputCostElement.textContent = `¥${outputCost.toFixed(4)}`;
+				totalCostElement.textContent = `¥${totalCost.toFixed(4)}`;
+				costContainer.style.display = 'block';
+			}
+
+			function createSymbol(jsonData) {
+				try {
+					// 去除代码块标记
+					jsonData = jsonData.replace(/```json\n/, '').replace(/\n```$/, '');
+
+					// 尝试解析JSON数据
+					const data = JSON.parse(jsonData);
+
+					// 检查JSON数据是否包含必要的字段
+					if (!data || typeof data !== 'object' || !data.type || !Array.isArray(data.pins)) {
+						throw new Error('JSON数据格式不正确，缺少type或pins字段');
+					}
+
+					const type = data.type;
+					const pins = data.pins;
+
+					console.log('解析的JSON数据:', data);
+
+					// 创建符号边框，传递引脚总数
+					let bbox = createSymbolBoundingBox(type, pins.length);
+					console.log('创建的符号边框:', bbox);
+
+					console.log('type0', type);
+					// 创建引脚
+					createSymbolPins(pins, bbox, type);
+					console.log('引脚创建完成');
+
+					eda.sys_IFrame.hideIFrame('First');
+					eda.sys_ToastMessage.showMessage('符号创建成功，支持在菜单中通过点击“继续创建”选项以重新打开窗口', 3);
+				} catch (error) {
+					console.error('创建符号失败:', error);
+					eda.sys_ToastMessage.showMessage('创建符号失败，请检查控制台日志以获取详细信息', 0);
+				}
+			}
+
+			/**
+			 * 根据引脚总数量动态创建符号边框
+			 */
+			function createSymbolBoundingBox(type, pinCount) {
+				if (!pinCount || isNaN(pinCount) || pinCount <= 0) {
+					throw new Error('无效的引脚数量: ' + pinCount);
+				}
+
+				let aspectRatio = 1.2;
+
+				if (type === 'SOP') {
+					aspectRatio = 0.45;
+				}
+
+				const pinSpacing = 20; // 每个引脚所需的最小间距
+
+				// 根据引脚数量计算宽度和高度
+				const totalPinsPerSide = Math.ceil(pinCount / 4); // 每边的引脚数量
+				const width = totalPinsPerSide * pinSpacing * aspectRatio; // 宽度与引脚数量成比例
+				const height = totalPinsPerSide * pinSpacing; // 高度与引脚数量成比例
+
+				// 创建边框的点坐标
+				const bbox = [0, 0, width, 0, width, height, 0, height, 0, 0];
+
+				// 使用 eda.sch_PrimitivePolygon.create 创建符号边框
+				eda.sch_PrimitivePolygon.create(bbox);
+
+				// 验证 bbox 是否有效
+				if (bbox.some((value) => isNaN(value))) {
+					throw new Error('生成的边框坐标无效: ' + bbox);
+				}
+
+				return bbox;
+			}
+
+			/**
+			 * 创建符号引脚
+			 */
+			function createSymbolPins(pins, bbox, type) {
+				if (!Array.isArray(pins) || pins.length === 0) {
+					throw new Error('无效的引脚数据: ' + pins);
+				}
+
+				if (!Array.isArray(bbox) || bbox.length < 8 || bbox.some((value) => isNaN(value))) {
+					throw new Error('无效的边框数据: ' + bbox);
+				}
+				console.log('type1', type);
+				pins.forEach((pin, pinIndex) => {
+					const pinNumber = pin.pinNumber;
+					const pinName = pin.pinName;
+					console.log('type2', type);
+					let x = 0,
+						y = 0,
+						rotation = 0; // 旋转角度
+					const pinCount = pins.length;
+
+					// 根据类型决定每边的引脚数量
+					const sidePinCount =
+						type === 'SOP'
+							? Math.ceil(pinCount / 2) // 如果是 SOP 类型，每边分配一半引脚
+							: Math.ceil((pinCount + 4) / 4) - 1; // 其他类型，每边分配引脚数量（去掉顶点）
+
+					const side =
+						type === 'SOP'
+							? pinIndex < sidePinCount
+								? 0
+								: 2 // 如果是 SOP 类型，只使用左边(0)和右边(2)
+							: Math.floor(pinIndex / sidePinCount); // 其他类型，按四边分配
+
+					const index =
+						type === 'SOP'
+							? pinIndex % sidePinCount // 如果是 SOP 类型，按左右两边分配
+							: pinIndex % sidePinCount; // 其他类型，按四边分配
+
+					const normalizedIndex = sidePinCount > 1 ? (index + 1) / (sidePinCount + 1) : 0;
+					console.log('type3', type);
+					switch (side) {
+						case 0: // left (逆时针第1边)
+							x = bbox[0] - 20; // 向左移动20
+							y = bbox[5] - (bbox[5] - bbox[1]) * normalizedIndex;
+							rotation = 180; // 旋转角度180
+							break;
+						case 1: // bottom (逆时针第2边)
+							if (type !== 'SOP') {
+								// SOP 类型不创建底边引脚
+								x = bbox[0] + (bbox[2] - bbox[0]) * normalizedIndex; // 沿着底边从左到右
+								y = bbox[1] - 20; // 向上移动20
+								rotation = 270; // 旋转角度270
+							}
+							break;
+						case 2: // right (逆时针第3边)
+							x = bbox[2] + 20; // 向右移动20
+							y = bbox[1] + (bbox[5] - bbox[1]) * normalizedIndex;
+							rotation = 0; // 旋转角度0
+							break;
+						case 3: // top (逆时针第4边)
+							if (type !== 'SOP') {
+								// SOP 类型不创建顶边引脚
+								x = bbox[2] - (bbox[2] - bbox[0]) * normalizedIndex; // 沿着顶边从右到左
+								y = bbox[5] + 20; // 向下移动20
+								rotation = 90; // 旋转角度90
+							}
+							break;
+					}
+
+					if (isNaN(x) || isNaN(y)) {
+						throw new Error(`引脚坐标无效: pinNumber=${pinNumber}, pinName=${pinName}, x=${x}, y=${y}`);
+					}
+
+					console.log('创建引脚:', pinNumber, pinName, x, y, rotation);
+					eda.sch_PrimitivePin.create(x, y, pinNumber, pinName, rotation);
+				});
+			}
+		</script>
+	</body>
+</html>
