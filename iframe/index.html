@@ -4,7 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-		<title>符号提取助手</title>
+		<title id="pageTitle"></title>
 		<style>
 			body {
 				font-family: Arial, sans-serif;
@@ -293,17 +293,17 @@
 	</head>
 	<body>
 		<div class="container">
-			<h1>符号提取助手</h1>
+			<h1 id="mainTitle"></h1>
 
 			<!-- API密钥输入区域 -->
 			<div class="api-key-section">
-				<label for="api-key">API密钥:</label>
-				<input type="text" id="api-key" placeholder="请输入您的API密钥" />
+				<label id="labelApiKey" for="api-key"></label>
+				<input type="text" id="api-key" />
 			</div>
 
 			<!-- 模型选择区域 -->
 			<div class="model-select-section">
-				<label for="model-select">选择模型:</label>
+				<label id="labelModelSelect" for="model-select"></label>
 				<select id="model-select">
 					<option value="qwen-vl-max-latest">qwen-vl-max-latest</option>
 					<option value="qwen2.5-vl-7b-instruct">qwen2.5-vl-7b-instruct</option>
@@ -314,21 +314,21 @@
 			</div>
 
 			<div id="drop-area" class="upload-area">
-				<p>拖拽图片到此处或点击上传</p>
+				<p id="uploadHint"></p>
 				<input type="file" id="file-input" multiple accept="image/*" style="display: none" />
 			</div>
 
 			<div id="preview-container" style="display: none">
 				<div class="preview-container" id="preview-list"></div>
-				<div id="image-count">已上传</div>
+				<div id="image-count"></div>
 			</div>
 
 			<div class="controls">
 				<div class="control-group">
-					<button id="start-analysis">开始分析</button>
-					<button id="stop-analysis" disabled>停止分析</button>
-					<button id="clear-all">清除所有</button>
-					<button class="top-right-button" id="hideButton">隐藏窗口</button>
+					<button id="start-analysis"></button>
+					<button id="stop-analysis" disabled></button>
+					<button id="clear-all"></button>
+					<button class="top-right-button" id="hideButton"></button>
 				</div>
 			</div>
 
@@ -336,33 +336,40 @@
 				<div class="progress-bar-container">
 					<div id="progress-bar"></div>
 				</div>
-				<div id="progress-text">处理中: 0/0</div>
-				<div class="timer-container" id="timer">已用时: 00:00</div>
+				<div id="progress-text"></div>
+				<div class="timer-container" id="timer"></div>
 			</div>
 
 			<div id="results-container" class="results-container">
 				<div class="results-header">
-					<div class="results-count">分析结果: 0</div>
+					<div id="resultsCount" class="results-count"></div>
 				</div>
 				<div class="results-list" id="results-list"></div>
 			</div>
 
 			<div id="download-all-container" style="display: none; margin-top: 20px; text-align: center">
-				<button id="download-all">下载所有结果</button>
+				<button id="download-all"></button>
 			</div>
 
 			<div id="cost-container" class="cost-container" style="display: none">
-				<div>输入Token: <span id="input-tokens">0</span></div>
-				<div>输出Token: <span id="output-tokens">0</span></div>
-				<div>输入费用: <span id="input-cost">¥0.00</span></div>
-				<div>输出费用: <span id="output-cost">¥0.00</span></div>
-				<div>总费用: <span id="total-cost">¥0.00</span></div>
+				<div><span id="labelInputTokens"></span>: <span id="input-tokens">0</span></div>
+				<div><span id="labelOutputTokens"></span>: <span id="output-tokens">0</span></div>
+				<div><span id="labelInputCost"></span>: <span id="input-cost">¥0.00</span></div>
+				<div><span id="labelOutputCost"></span>: <span id="output-cost">¥0.00</span></div>
+				<div><span id="labelTotalCost"></span>: <span id="total-cost">¥0.00</span></div>
 			</div>
 
 			<div id="scroll-indicator" class="scroll-indicator"></div>
 		</div>
 
 		<script>
+			// i18n
+			var edaObj = (typeof eda !== 'undefined') ? eda : (window.parent && window.parent.eda);
+			function t(tag, ...args) {
+				if (edaObj && edaObj.sys_I18n) return edaObj.sys_I18n.text(tag, undefined, undefined, ...args);
+				return tag;
+			}
+
 			// 全局变量
 			let uploadedFiles = [];
 			let analysisResults = [];
@@ -427,6 +434,28 @@
 				if (eda.sys_Storage.getExtensionUserConfig('selected_model')) {
 					modelSelect.value = eda.sys_Storage.getExtensionUserConfig('selected_model');
 				}
+
+				// i18n: set translated text for all UI elements
+				document.getElementById('pageTitle').textContent = t('Symbol Extraction Assistant');
+				document.getElementById('mainTitle').textContent = t('Symbol Extraction Assistant');
+				document.getElementById('labelApiKey').textContent = t('API Key:');
+				apiKeyInput.setAttribute('placeholder', t('Please enter your API key'));
+				document.getElementById('labelModelSelect').textContent = t('Select Model:');
+				document.getElementById('uploadHint').textContent = t('Drag images here or click to upload');
+				imageCount.textContent = t('Uploaded') + ' 0';
+				startButton.textContent = t('Start Analysis');
+				stopButton.textContent = t('Stop Analysis');
+				clearAllButton.textContent = t('Clear All');
+				document.getElementById('hideButton').textContent = t('Hide Window');
+				progressText.textContent = t('Processing: ${1}/${2}', '0', '0');
+				timerElement.textContent = t('Elapsed: ${1}', '00:00');
+				document.getElementById('resultsCount').textContent = t('Analysis Results: ${1}', '0');
+				downloadAllButton.textContent = t('Download All Results');
+				document.getElementById('labelInputTokens').textContent = t('Input Tokens');
+				document.getElementById('labelOutputTokens').textContent = t('Output Tokens');
+				document.getElementById('labelInputCost').textContent = t('Input Cost');
+				document.getElementById('labelOutputCost').textContent = t('Output Cost');
+				document.getElementById('labelTotalCost').textContent = t('Total Cost');
 
 				initDropArea();
 				initButtons();
@@ -506,7 +535,7 @@
 				for (let i = 0; i < files.length; i++) {
 					const file = files[i];
 					if (!file.type.match('image.*')) {
-						eda.sys_ToastMessage.showMessage(`文件 "${file.name}" 不是图片，已跳过`, 2);
+						eda.sys_ToastMessage.showMessage(t('File "${1}" is not an image, skipped', file.name), 2);
 						continue;
 					}
 
@@ -524,7 +553,7 @@
 					createPreviewItem(file);
 				}
 
-				imageCount.textContent = '已上传 ' + uploadedFiles.length;
+				imageCount.textContent = t('Uploaded') + ' ' + uploadedFiles.length;
 				updateUI();
 			}
 
@@ -556,7 +585,7 @@
 					const removeBtn = document.createElement('button');
 					removeBtn.className = 'preview-item-remove';
 					removeBtn.innerHTML = '&times;';
-					removeBtn.title = '移除图片';
+					removeBtn.title = t('Remove Image');
 					removeBtn.addEventListener('click', (e) => {
 						e.stopPropagation();
 						removeFile(file.name);
@@ -601,7 +630,7 @@
 					previewItem.remove();
 				}
 
-				imageCount.textContent = '已上传 ' + uploadedFiles.length;
+				imageCount.textContent = t('Uploaded') + ' ' + uploadedFiles.length;
 				updateUI();
 			}
 
@@ -620,7 +649,7 @@
 			function clearAll() {
 				uploadedFiles = [];
 				previewList.innerHTML = '';
-				imageCount.textContent = '已上传  0';
+				imageCount.textContent = t('Uploaded') + ' 0';
 				analysisResults = [];
 				resultsList.innerHTML = '';
 				downloadAllContainer.style.display = 'none';
@@ -635,7 +664,7 @@
 				if (!isProcessing) return;
 				shouldStopProcessing = true;
 				stopButton.disabled = true;
-				stopButton.textContent = '正在停止...';
+				stopButton.textContent = t('Stopping...');
 			}
 
 			/**
@@ -643,12 +672,12 @@
 			 */
 			async function startAnalysis() {
 				// 获取当前API密钥和模型
-				eda.sys_ToastMessage.showMessage('图片识别正在进行中，等待期间可选择隐藏窗口', 3);
+				eda.sys_ToastMessage.showMessage(t('Image recognition in progress, you can hide the window while waiting'), 3);
 				apiKey = apiKeyInput.value.trim();
 				selectedModel = modelSelect.value;
 
 				if (!apiKey) {
-					eda.sys_ToastMessage.showMessage('请输入API密钥', 0);
+					eda.sys_ToastMessage.showMessage(t('Please enter your API key'), 0);
 					return;
 				}
 
@@ -662,7 +691,7 @@
 				updateUI();
 				progressContainer.style.display = 'block';
 				progressBar.style.width = '0%';
-				progressText.textContent = `处理中: 0/${uploadedFiles.length}`;
+				progressText.textContent = t('Processing: ${1}/${2}', '0', String(uploadedFiles.length));
 				resultsList.innerHTML = '';
 				analysisResults = [];
 				totalInputTokens = 0;
@@ -674,12 +703,12 @@
 					const elapsedTime = Date.now() - startTime;
 					const minutes = Math.floor(elapsedTime / 60000);
 					const seconds = Math.floor((elapsedTime % 60000) / 1000);
-					timerElement.textContent = `已用时: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+					timerElement.textContent = t('Elapsed: ${1}', `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
 				}, 1000);
 
 				for (let i = 0; i < uploadedFiles.length; i += batchSize) {
 					if (shouldStopProcessing) {
-						progressText.textContent = `已停止: ${i}/${uploadedFiles.length}`;
+						progressText.textContent = t('Stopped: ${1}/${2}', String(i), String(uploadedFiles.length));
 						break;
 					}
 
@@ -687,7 +716,7 @@
 					const currentBatchFiles = uploadedFiles.slice(i, endIndex);
 					const progress = Math.round((i / uploadedFiles.length) * 100);
 					progressBar.style.width = `${progress}%`;
-					progressText.textContent = `处理中: ${i}/${uploadedFiles.length}`;
+					progressText.textContent = t('Processing: ${1}/${2}', String(i), String(uploadedFiles.length));
 
 					const batchPromises = currentBatchFiles.map(async (file, batchIndex) => {
 						const fileIndex = i + batchIndex;
@@ -730,7 +759,7 @@
 
 				const processedCount = shouldStopProcessing ? analysisResults.length : uploadedFiles.length;
 				progressBar.style.width = '100%';
-				progressText.textContent = `处理完成: ${processedCount}/${uploadedFiles.length}`;
+				progressText.textContent = t('Processing Complete: ${1}/${2}', String(processedCount), String(uploadedFiles.length));
 				setTimeout(() => {
 					progressContainer.style.display = 'none';
 					progressBar.style.width = '0%';
@@ -758,7 +787,7 @@
 						resolve(base64);
 					};
 					reader.onerror = function (e) {
-						reject(new Error('读取文件失败'));
+						reject(new Error(t('Failed to read file')));
 					};
 					reader.readAsDataURL(file);
 				});
@@ -769,7 +798,7 @@
 			 */
 			async function analyzeImage(file, base64Image, mimeType) {
 				if (shouldStopProcessing) {
-					throw new Error('用户已停止处理');
+					throw new Error(t('User stopped processing'));
 				}
 
 				const url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
@@ -807,7 +836,7 @@
 					});
 
 					if (!response.ok) {
-						throw new Error('API请求失败');
+						throw new Error(t('API request failed'));
 					}
 
 					const result = await response.json();
@@ -817,7 +846,7 @@
 						outputTokens: result.usage.completion_tokens,
 					};
 				} catch (error) {
-					throw new Error('API调用失败');
+					throw new Error(t('API call failed'));
 				}
 			}
 
@@ -834,15 +863,15 @@
 				title.className = 'result-card-title';
 				title.textContent = file.name;
 				const toggleBtn = document.createElement('button');
-				toggleBtn.textContent = '展开';
+				toggleBtn.textContent = t('Expand');
 				toggleBtn.addEventListener('click', () => {
 					const content = resultCard.querySelector('.result-card-content');
 					if (content.style.display === 'none' || content.style.display === '') {
 						content.style.display = 'block';
-						toggleBtn.textContent = '收起';
+						toggleBtn.textContent = t('Collapse');
 					} else {
 						content.style.display = 'none';
-						toggleBtn.textContent = '展开';
+						toggleBtn.textContent = t('Expand');
 					}
 				});
 				header.appendChild(title);
@@ -855,24 +884,24 @@
 				const footer = document.createElement('div');
 				footer.className = 'result-card-footer';
 				const copyBtn = document.createElement('button');
-				copyBtn.textContent = '复制结果';
+				copyBtn.textContent = t('Copy Result');
 				copyBtn.addEventListener('click', () => {
 					navigator.clipboard
 						.writeText(result)
 						.then(() => {
-							copyBtn.textContent = '已复制';
+							copyBtn.textContent = t('Copied');
 							setTimeout(() => {
-								copyBtn.textContent = '复制结果';
+								copyBtn.textContent = t('Copy Result');
 							}, 2000);
 						})
 						.catch((err) => {
-							console.error('复制失败:', err);
-							eda.sys_ToastMessage.showMessage('复制失败，请手动复制', 0);
+							console.error('Copy failed:', err);
+							eda.sys_ToastMessage.showMessage(t('Copy failed, please copy manually'), 0);
 						});
 				});
 				const createSymbolBtn = document.createElement('button');
 				createSymbolBtn.className = 'create-symbol-btn';
-				createSymbolBtn.textContent = '创建符号';
+				createSymbolBtn.textContent = t('Create Symbol');
 				createSymbolBtn.addEventListener('click', () => {
 					createSymbol(result);
 				});
@@ -899,15 +928,15 @@
 				title.className = 'result-card-title';
 				title.textContent = file.name;
 				const toggleBtn = document.createElement('button');
-				toggleBtn.textContent = '展开';
+				toggleBtn.textContent = t('Expand');
 				toggleBtn.addEventListener('click', () => {
 					const content = resultCard.querySelector('.result-card-content');
 					if (content.style.display === 'none' || content.style.display === '') {
 						content.style.display = 'block';
-						toggleBtn.textContent = '收起';
+						toggleBtn.textContent = t('Collapse');
 					} else {
 						content.style.display = 'none';
-						toggleBtn.textContent = '展开';
+						toggleBtn.textContent = t('Expand');
 					}
 				});
 				header.appendChild(title);
@@ -915,7 +944,7 @@
 
 				const content = document.createElement('div');
 				content.className = 'result-card-content';
-				content.textContent = `处理失败: ${errorMessage}`;
+				content.textContent = t('Processing Failed: ${1}', errorMessage);
 
 				resultCard.appendChild(header);
 				resultCard.appendChild(content);
@@ -938,7 +967,7 @@
 			 */
 			function downloadAllResults() {
 				if (analysisResults.length === 0) {
-					eda.sys_ToastMessage.showMessage('没有可下载的结果', 2);
+					eda.sys_ToastMessage.showMessage(t('No results to download'), 2);
 					return;
 				}
 
@@ -953,7 +982,7 @@
 						const link = document.createElement('a');
 						link.href = URL.createObjectURL(blob);
 						const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
-						link.download = `图片分析结果_${timestamp}.zip`;
+						link.download = `Image_Analysis_Results_${timestamp}.zip`;
 						document.body.appendChild(link);
 						link.click();
 						document.body.removeChild(link);
@@ -961,7 +990,7 @@
 					})
 					.catch((err) => {
 						console.error('创建ZIP文件失败:', err);
-						eda.sys_ToastMessage.showMessage('创建ZIP文件失败，将逐个下载结果', 2);
+						eda.sys_ToastMessage.showMessage(t('Failed to create ZIP file, downloading results individually'), 2);
 						analysisResults.forEach((result) => {
 							downloadResult(result.filename, result.result);
 						});
@@ -1010,7 +1039,7 @@
 
 					// 检查JSON数据是否包含必要的字段
 					if (!data || typeof data !== 'object' || !data.type || !Array.isArray(data.pins)) {
-						throw new Error('JSON数据格式不正确，缺少type或pins字段');
+						throw new Error(t('Invalid JSON data format, missing type or pins field'));
 					}
 
 					const type = data.type;
@@ -1028,10 +1057,10 @@
 					console.log('引脚创建完成');
 
 					eda.sys_IFrame.hideIFrame('First');
-					eda.sys_ToastMessage.showMessage('符号创建成功，支持在菜单中通过点击“继续创建”选项以重新打开窗口', 3);
+					eda.sys_ToastMessage.showMessage(t('Symbol created successfully, you can reopen the window by clicking “Continue Creating” in the menu'), 3);
 				} catch (error) {
 					console.error('创建符号失败:', error);
-					eda.sys_ToastMessage.showMessage('创建符号失败，请检查控制台日志以获取详细信息', 0);
+					eda.sys_ToastMessage.showMessage(t('Failed to create symbol, please check console logs for details'), 0);
 				}
 			}
 
@@ -1040,7 +1069,7 @@
 			 */
 			function createSymbolBoundingBox(type, pinCount) {
 				if (!pinCount || isNaN(pinCount) || pinCount <= 0) {
-					throw new Error('无效的引脚数量: ' + pinCount);
+					throw new Error(t('Invalid pin count: ${1}', String(pinCount)));
 				}
 
 				let aspectRatio = 1.2;
@@ -1064,7 +1093,7 @@
 
 				// 验证 bbox 是否有效
 				if (bbox.some((value) => isNaN(value))) {
-					throw new Error('生成的边框坐标无效: ' + bbox);
+					throw new Error(t('Invalid bounding box coordinates generated: ${1}', String(bbox)));
 				}
 
 				return bbox;
@@ -1075,11 +1104,11 @@
 			 */
 			function createSymbolPins(pins, bbox, type) {
 				if (!Array.isArray(pins) || pins.length === 0) {
-					throw new Error('无效的引脚数据: ' + pins);
+					throw new Error(t('Invalid pin data: ${1}', String(pins)));
 				}
 
 				if (!Array.isArray(bbox) || bbox.length < 8 || bbox.some((value) => isNaN(value))) {
-					throw new Error('无效的边框数据: ' + bbox);
+					throw new Error(t('Invalid bounding box data: ${1}', String(bbox)));
 				}
 				console.log('type1', type);
 				pins.forEach((pin, pinIndex) => {
@@ -1141,7 +1170,7 @@
 					}
 
 					if (isNaN(x) || isNaN(y)) {
-						throw new Error(`引脚坐标无效: pinNumber=${pinNumber}, pinName=${pinName}, x=${x}, y=${y}`);
+						throw new Error(t('Invalid pin coordinates: pinNumber=${1}, pinName=${2}, x=${3}, y=${4}', String(pinNumber), String(pinName), String(x), String(y)));
 					}
 
 					console.log('创建引脚:', pinNumber, pinName, x, y, rotation);
