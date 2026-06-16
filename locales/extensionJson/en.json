@@ -1,8 +1,12 @@
 {
 	"About...": "About...",
-	"符号提取助手": "Symbol Extraction Assistant",
-	"基于 Qwen2.5-VL 视觉模型提取符号信息，并依据所提取的信息将符号直接生成至画布.": "Extract symbol information using the Qwen2.5-VL vision model and generate symbols directly to the canvas based on the extracted information.",
-	"symbols": "symbols",
 	"extraction": "extraction",
-	"tool": "tool"
+	"symbols": "symbols",
+	"tool": "tool",
+	"关于": "About",
+	"助手": "Assistant",
+	"基于 Qwen2.5-VL 视觉模型提取符号信息，并依据所提取的信息将符号直接生成至画布.": "Extract symbol information using the Qwen2.5-VL vision model and generate symbols directly to the canvas based on the extracted information.",
+	"符号提取": "Symbol Extraction",
+	"符号提取助手": "Symbol Extraction Assistant",
+	"继续创建": "Continue Create"
 }
